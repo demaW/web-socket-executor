@@ -1,11 +1,13 @@
 package com.dem.websocketexec.core;
 
+import com.dem.websocketexec.util.DevToolsParser;
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketAdapter;
 import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.openqa.selenium.WebDriver;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,34 +17,18 @@ public class WebSocketExecutor {
     private URI uri;
     private WebSocket ws;
     private final Object waitCoord = new Object();
-    private final int timeoutInSecs = 5;
+    private final static int timeoutInSecs = 5;
 
-    public WebSocketExecutor(URI uri) {
-        this.uri = uri;
+    public WebSocketExecutor() {
     }
 
-    public void executeString(String stringToExecute) {
-
-        String req = "{ " +
-                "\"id\": 1," +
-                "\"method\": \"Runtime.evaluate\"," +
-                "\"params\": {" +
-                "\"expression\": \"" + stringToExecute + "\"" +
-                "}}";
-
-        try {
-            this.sendWSMessage(this.uri.toString(), req);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (WebSocketException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        ws.disconnect();
-
+    public void executeString(WebDriver driver, String extensionId, String stringToExecute) {
+        DevToolsParser devToolsParser = new DevToolsParser(driver);
+        devToolsParser.parseDevToolsPort(devToolsParser.getDevToolLogEntry());
+        String devToolsUri = devToolsParser.getUrl();
+        SocketExtractor se = new SocketExtractor();
+        setUri(se.getWebSocketUri(devToolsUri, extensionId));
+        sendString(stringToExecute);
     }
 
     private void sendWSMessage(String url, String message) throws IOException, WebSocketException, InterruptedException, JSONException {
@@ -72,5 +58,37 @@ public class WebSocketExecutor {
         synchronized (waitCoord) {
             waitCoord.wait(timeoutInSecs * 1000);
         }
+    }
+
+    public URI getUri() {
+        return uri;
+    }
+
+    public void setUri(URI uri) {
+        this.uri = uri;
+    }
+
+    private void sendString(String stringToExecute) {
+
+        String req = "{ " +
+                "\"id\": 1," +
+                "\"method\": \"Runtime.evaluate\"," +
+                "\"params\": {" +
+                "\"expression\": \"" + stringToExecute + "\"" +
+                "}}";
+
+        try {
+            this.sendWSMessage(this.uri.toString(), req);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (WebSocketException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        ws.disconnect();
+
     }
 }
