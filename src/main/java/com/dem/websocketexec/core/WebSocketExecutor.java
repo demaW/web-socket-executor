@@ -17,10 +17,7 @@ public class WebSocketExecutor {
     private URI uri;
     private WebSocket ws;
     private final Object waitCoord = new Object();
-    private final static int timeoutInSecs = 5;
-
-    public WebSocketExecutor() {
-    }
+    private final static int TIMEOUT_IN_SECS = 3;
 
     public void executeString(WebDriver driver, String extensionId, String stringToExecute) {
         DevToolsParser devToolsParser = new DevToolsParser(driver);
@@ -48,6 +45,7 @@ public class WebSocketExecutor {
                             if (new JSONObject(message).getInt("id") == messageId) {
                                 synchronized (waitCoord) {
                                     waitCoord.notifyAll();
+                                    //TODO add response to JSON
                                 }
                             }
                         }
@@ -56,7 +54,14 @@ public class WebSocketExecutor {
         }
         ws.sendText(message);
         synchronized (waitCoord) {
-            waitCoord.wait(timeoutInSecs * 1000);
+            waitCoord.wait(TIMEOUT_IN_SECS * 1000);
+        }
+    }
+
+    private void sendWSMessage2(String url, String message) throws IOException, WebSocketException, InterruptedException, JSONException {
+        if (ws == null) {
+            ws = new WebSocketFactory()
+                    .createSocket(url).connect().sendText(message).disconnect();
         }
     }
 
@@ -70,15 +75,8 @@ public class WebSocketExecutor {
 
     private void sendString(String stringToExecute) {
 
-        String req = "{ " +
-                "\"id\": 1," +
-                "\"method\": \"Runtime.evaluate\"," +
-                "\"params\": {" +
-                "\"expression\": \"" + stringToExecute + "\"" +
-                "}}";
-
         try {
-            this.sendWSMessage(this.uri.toString(), req);
+            this.sendWSMessage(this.uri.toString(), stringToExecute);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (WebSocketException e) {

@@ -1,5 +1,6 @@
 package com.dem.websocketexec;
 
+import com.dem.websocketexec.core.QueryProvider;
 import com.dem.websocketexec.core.WebSocketExecutor;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -14,6 +15,7 @@ import java.util.logging.Level;
 
 public class AppTest {
     public static final String EXTENSION_ID = "chrome-extension://iblgdcjagdifpikcobibfpkddkphllmc/popup/popup.html";
+    public static final String DIV_ID_LOGIN_BUTTON = "div[id='login-button']";
     ChromeDriver driver;
 
     @Test
@@ -25,11 +27,12 @@ public class AppTest {
         driver = new ChromeDriver(options);
 
         WebSocketExecutor webSocketExecutor = new WebSocketExecutor();
-        String stringToExecute = "document.querySelector(\\\"div[id='login-button']\\\").click()";
+        String stringToExecute = QueryProvider.getClickWithJQuerySelector(DIV_ID_LOGIN_BUTTON);
         webSocketExecutor.executeString(driver, EXTENSION_ID, stringToExecute);
         System.out.println();
+        webSocketExecutor = new WebSocketExecutor();
         webSocketExecutor.executeString(driver, EXTENSION_ID, stringToExecute);
-
+        System.out.println();
     }
 
     @AfterTest
