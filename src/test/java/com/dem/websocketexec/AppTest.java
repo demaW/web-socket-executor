@@ -1,7 +1,9 @@
 package com.dem.websocketexec;
 
 import com.dem.websocketexec.core.QueryProvider;
+import com.dem.websocketexec.core.ResultParser;
 import com.dem.websocketexec.core.WebSocketExecutor;
+import org.json.JSONObject;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.logging.LogType;
@@ -27,12 +29,13 @@ public class AppTest {
         driver = new ChromeDriver(options);
 
         WebSocketExecutor webSocketExecutor = new WebSocketExecutor();
-        String stringToExecute = QueryProvider.getClickWithJQuerySelector(DIV_ID_LOGIN_BUTTON);
+       /* String stringToExecute = QueryProvider.getClickWithJQuerySelector(DIV_ID_LOGIN_BUTTON);
         webSocketExecutor.executeString(driver, EXTENSION_ID, stringToExecute);
-        System.out.println();
+        System.out.println();*/
         webSocketExecutor = new WebSocketExecutor();
-        webSocketExecutor.executeString(driver, EXTENSION_ID, stringToExecute);
-        System.out.println();
+        Object resultT = webSocketExecutor.executeString(driver, EXTENSION_ID, QueryProvider.getTextWithJQuerySelector(DIV_ID_LOGIN_BUTTON));
+        String value = ResultParser.getText((JSONObject) resultT);
+        System.out.println(value);
     }
 
     @AfterTest

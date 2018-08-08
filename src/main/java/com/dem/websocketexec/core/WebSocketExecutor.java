@@ -19,33 +19,36 @@ public class WebSocketExecutor {
     private final Object waitCoord = new Object();
     private final static int TIMEOUT_IN_SECS = 3;
 
-    public void executeString(WebDriver driver, String extensionId, String stringToExecute) {
+    public Object executeString(WebDriver driver, String extensionId, String stringToExecute) {
         DevToolsParser devToolsParser = new DevToolsParser(driver);
         devToolsParser.parseDevToolsPort(devToolsParser.getDevToolLogEntry());
         String devToolsUri = devToolsParser.getUrl();
         SocketExtractor se = new SocketExtractor();
         setUri(se.getWebSocketUri(devToolsUri, extensionId));
-        sendString(stringToExecute);
+        return sendString(stringToExecute);
     }
 
-    private void sendWSMessage(String url, String message) throws IOException, WebSocketException, InterruptedException, JSONException {
-        JSONObject jsonObject = new JSONObject(message);
-        final int messageId = jsonObject.getInt("id");
+    private JSONObject sendWSMessage(String url, String message) throws IOException, WebSocketException, InterruptedException, JSONException {
+        final JSONObject[] result = {null};
         if (ws == null) {
             ws = new WebSocketFactory()
                     .createSocket(url)
                     .addListener(new WebSocketAdapter() {
                         @Override
                         public void onTextMessage(WebSocket ws, String message) throws JSONException {
-                            System.out.println(message);
-                            if (new JSONObject(message).getString("method").equals("Network.requestIntercepted   ")) {
+                            /*if (new JSONObject(message).getString("resu").equals("Network.requestIntercepted   ")) {
                                 System.out.println("found");
-                            }
+                            }*/
                             // Received a response. Print the received message.
-                            if (new JSONObject(message).getInt("id") == messageId) {
+                            if (!new JSONObject(message).getString("result").isEmpty()) {
+                                result[0] = new JSONObject(message);
                                 synchronized (waitCoord) {
                                     waitCoord.notifyAll();
-                                    //TODO add response to JSON
+                                }
+                            } else {
+                                result[0] = new JSONObject(message);
+                                synchronized (waitCoord) {
+                                    waitCoord.notifyAll();
                                 }
                             }
                         }
@@ -56,6 +59,7 @@ public class WebSocketExecutor {
         synchronized (waitCoord) {
             waitCoord.wait(TIMEOUT_IN_SECS * 1000);
         }
+        return result[0];
     }
 
     private void sendWSMessage2(String url, String message) throws IOException, WebSocketException, InterruptedException, JSONException {
@@ -73,20 +77,14 @@ public class WebSocketExecutor {
         this.uri = uri;
     }
 
-    private void sendString(String stringToExecute) {
-
+    private JSONObject sendString(String stringToExecute) {
+        JSONObject result = null;
         try {
-            this.sendWSMessage(this.uri.toString(), stringToExecute);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (WebSocketException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
+            result = this.sendWSMessage(this.uri.toString(), stringToExecute);
+        } catch (IOException | WebSocketException | InterruptedException | JSONException e) {
             e.printStackTrace();
         }
         ws.disconnect();
-
+        return result;
     }
 }
