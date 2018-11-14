@@ -1,35 +1,33 @@
 package com.dem.websocketexec.core;
 
-import com.dem.websocketexec.util.DevToolsParser;
 import com.neovisionaries.ws.client.WebSocket;
 import com.neovisionaries.ws.client.WebSocketAdapter;
 import com.neovisionaries.ws.client.WebSocketException;
 import com.neovisionaries.ws.client.WebSocketFactory;
+import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openqa.selenium.WebDriver;
 
 import java.io.IOException;
 import java.net.URI;
 
 public class WebSocketExecutor {
 
+    private Logger logger = Logger.getLogger(WebSocketExecutor.class);
     private URI uri;
     private WebSocket ws;
     private final Object waitCoord = new Object();
-    private final static int TIMEOUT_IN_SECS = 3;
+    private static final int TIMEOUT_IN_SECS = 3;
 
-    public Object executeString(WebDriver driver, String extensionId, String stringToExecute) {
-        DevToolsParser devToolsParser = new DevToolsParser(driver);
-        devToolsParser.parseDevToolsPort(devToolsParser.getDevToolLogEntry());
-        String devToolsUri = devToolsParser.getUrl();
+    public Object executeString(String devToolsUri, String extensionId, String stringToExecute) {
         SocketExtractor se = new SocketExtractor();
         setUri(se.getWebSocketUri(devToolsUri, extensionId));
         return sendString(stringToExecute);
     }
 
-    private JSONObject sendWSMessage(String url, String message) throws IOException, WebSocketException, InterruptedException, JSONException {
+    private JSONObject sendWSMessage(String url, String message) throws IOException, WebSocketException, InterruptedException {
         final JSONObject[] result = {null};
+        logger.info("Sending websocket command to URL: " + url);
         if (ws == null) {
             ws = new WebSocketFactory()
                     .createSocket(url)
@@ -62,12 +60,6 @@ public class WebSocketExecutor {
         return result[0];
     }
 
-    private void sendWSMessage2(String url, String message) throws IOException, WebSocketException, InterruptedException, JSONException {
-        if (ws == null) {
-            ws = new WebSocketFactory()
-                    .createSocket(url).connect().sendText(message).disconnect();
-        }
-    }
 
     public URI getUri() {
         return uri;
@@ -81,8 +73,8 @@ public class WebSocketExecutor {
         JSONObject result = null;
         try {
             result = this.sendWSMessage(this.uri.toString(), stringToExecute);
-        } catch (IOException | WebSocketException | InterruptedException | JSONException e) {
-            e.printStackTrace();
+        } catch (IOException | WebSocketException | InterruptedException e) {
+            logger.error("Error during sending WS message\n", e );
         }
         ws.disconnect();
         return result;

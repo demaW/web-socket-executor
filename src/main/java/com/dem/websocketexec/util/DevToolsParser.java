@@ -6,7 +6,7 @@ import org.openqa.selenium.logging.LogType;
 
 public class DevToolsParser {
 
-    private static final String DEV_TOOLS_URI = "DevTools request: http://localhost";
+    private static final String DEV_TOOLS_URI = "DevTools HTTP Request: http://localhost:";
     private WebDriver driver;
     private String url;
 
@@ -33,4 +33,6 @@ public class DevToolsParser {
     public void setUrl(String url) {
         this.url = url;
     }
+
+    //TODO rewrite this code to check if no value then parse logs. When present, skip. Add function to update it by re-parsing;
 }

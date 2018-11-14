@@ -1,6 +1,7 @@
 package com.dem.websocketexec.core;
 
 
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,6 +14,8 @@ import java.net.URI;
 import java.net.URL;
 
 public class SocketExtractor {
+
+    private static final Logger log = Logger.getLogger(SocketExtractor.class);
 
     public URI getWebSocketUri(String debugUrl, String extensionID) {
         String webSocketDebuggerUrl = null;
@@ -31,11 +34,15 @@ public class SocketExtractor {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error during parsing URI", e);
         } catch (JSONException e) {
-            e.printStackTrace();
+            log.error("Error during parsing JSON", e);
         }
 
+        if (webSocketDebuggerUrl == null){
+            log.error("Websocket url not extracted");
+            return null;
+        }
         return URI.create(webSocketDebuggerUrl);
     }
 }

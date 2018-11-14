@@ -1,32 +1,36 @@
 package com.dem.websocketexec.core;
 
+import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class ResultParser {
 
+    private static final Logger log = Logger.getLogger(ResultParser.class);
+    private static final String RESULT = "result";
+
     public static String getText(JSONObject jsonObject) {
         try {
             if (checkIfNoErrors(jsonObject)) {
-                return jsonObject.getJSONObject("result").getJSONObject("result").getString("value");
+                return jsonObject.getJSONObject(RESULT).getJSONObject(RESULT).getString("value");
             } else {
-                System.err.println("Error appeared... please check your request");
+                log.error("Error appeared... please check your request");
                 return null;
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            log.error("Error during getting text\n", e);
         }
         return null;
     }
 
 
-    public static boolean checkIfNoErrors(JSONObject jsonObject) throws JSONException {
+    public static boolean checkIfNoErrors(JSONObject jsonObject){
         // jsonObject
         try {
-            if (jsonObject.getJSONObject("result").getJSONObject("result").getString("subtype") != null)
-                return !jsonObject.getJSONObject("result").getJSONObject("result").getString("subtype").equalsIgnoreCase("error");
+            if (jsonObject.getJSONObject(RESULT).getJSONObject(RESULT).getString("subtype") != null)
+                return !jsonObject.getJSONObject(RESULT).getJSONObject(RESULT).getString("subtype").equalsIgnoreCase("error");
         } catch (JSONException e){
-            System.out.println("Error not found");
+            log.error("Error during parsing for any error messages");
         }
         return true;
     }
