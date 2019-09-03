@@ -13,7 +13,8 @@ import java.net.URI;
 
 public class WebSocketExecutor {
 
-    private Logger logger = Logger.getLogger(WebSocketExecutor.class);
+    private static final String RESULT = "result";
+    private Logger log = Logger.getLogger(WebSocketExecutor.class);
     private URI uri;
     private WebSocket ws;
     private final Object waitCoord = new Object();
@@ -22,12 +23,18 @@ public class WebSocketExecutor {
     public Object executeString(String devToolsUri, String extensionId, String stringToExecute) {
         SocketExtractor se = new SocketExtractor();
         setUri(se.getWebSocketUri(devToolsUri, extensionId));
-        return sendString(stringToExecute);
+        JSONObject result = null;
+        try {
+            result = sendString(stringToExecute);
+        } catch (JSONException e) {
+            log.error(e.getMessage());
+        }
+        return result;
     }
 
     private JSONObject sendWSMessage(String url, String message) throws IOException, WebSocketException, InterruptedException {
         final JSONObject[] result = {null};
-        logger.info("Sending websocket command to URL: " + url);
+        log.info("Sending websocket command to URL: " + url);
         if (ws == null) {
             ws = new WebSocketFactory()
                     .createSocket(url)
@@ -38,7 +45,7 @@ public class WebSocketExecutor {
                                 System.out.println("found");
                             }*/
                             // Received a response. Print the received message.
-                            if (!new JSONObject(message).getString("result").isEmpty()) {
+                            if (!new JSONObject(message).getString(RESULT).isEmpty()) {
                                 result[0] = new JSONObject(message);
                                 synchronized (waitCoord) {
                                     waitCoord.notifyAll();
@@ -69,14 +76,30 @@ public class WebSocketExecutor {
         this.uri = uri;
     }
 
-    private JSONObject sendString(String stringToExecute) {
+    private JSONObject sendString(String stringToExecute) throws JSONException {
         JSONObject result = null;
         try {
             result = this.sendWSMessage(this.uri.toString(), stringToExecute);
         } catch (IOException | WebSocketException | InterruptedException e) {
-            logger.error("Error during sending WS message\n", e );
+            log.error("Error during sending WS message\n", e);
+            Thread.currentThread().interrupt();
         }
         ws.disconnect();
-        return result;
+        assert result != null;
+        if (checkIfNoErrors(result)) {
+            return result;
+        } else {
+            throw new IllegalArgumentException(result.getJSONObject(RESULT).getJSONObject(RESULT).getString("description"));
+        }
+    }
+
+    public boolean checkIfNoErrors(JSONObject jsonObject) {
+        try {
+            if (jsonObject.getJSONObject(RESULT).getJSONObject(RESULT).getString("subtype") != null)
+                return !jsonObject.getJSONObject(RESULT).getJSONObject(RESULT).getString("subtype").equalsIgnoreCase("error");
+        } catch (JSONException e) {
+            log.info("No errors in JSON response. Proceeding...");
+        }
+        return true;
     }
 }

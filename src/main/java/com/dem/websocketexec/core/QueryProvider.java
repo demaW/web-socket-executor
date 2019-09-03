@@ -2,7 +2,8 @@ package com.dem.websocketexec.core;
 
 public class QueryProvider {
 
-    private QueryProvider(){}
+    private QueryProvider() {
+    }
 
     public static String getRequest(String stringToExecute) {
         return "{ " +
@@ -14,13 +15,29 @@ public class QueryProvider {
     }
 
     public static String getClickWithJQuerySelector(String selector) {
-        String queryClick = "document.querySelector(\\\"" + selector + "\\\").click()";
-        return getRequest(queryClick);
+        String query = "document.querySelector(\\\"" + selector + "\\\").click()";
+        return getRequest(query);
     }
 
     public static String getTextWithJQuerySelector(String selector) {
-        String queryClick = "document.querySelector(\\\"" + selector + "\\\").innerHTML";
-        return getRequest(queryClick);
+        String query = "document.querySelector(\\\"" + selector + "\\\").innerHTML";
+        return getRequest(query);
     }
 
+    public static String getAttributeWithJQuerySelector(String selector, String attribute) {
+        String query = "document.querySelector(\\\"" + selector + "\\\").getAttribute(\\\"" + attribute + "\\\")";
+        return getRequest(query);
+    }
+
+    public static void clearTextValue(){
+
+    }
+
+    public static void setTextValue(){
+
+    }
+
+    public static void sendKeyByJSEventCode(){
+
+    }
 }

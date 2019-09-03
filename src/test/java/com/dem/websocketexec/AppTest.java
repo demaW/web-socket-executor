@@ -5,16 +5,13 @@ import com.dem.websocketexec.core.ResultParser;
 import com.dem.websocketexec.core.WebSocketExecutor;
 import com.dem.websocketexec.util.DevToolsParser;
 import org.json.JSONObject;
+import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.logging.LogType;
-import org.openqa.selenium.logging.LoggingPreferences;
-import org.openqa.selenium.remote.CapabilityType;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.util.logging.Level;
 
 public class AppTest {
     private static final String EXTENSION_ID = "chrome-extension://iblgdcjagdifpikcobibfpkddkphllmc/popup/popup.html";
@@ -26,18 +23,18 @@ public class AppTest {
     public void test() {
         System.setProperty("webdriver.chrome.driver", "driver/chromedriver.exe");
 
-        //add performance log
+        //add add extension
         ChromeOptions options = getChromeOptions();
         driver = new ChromeDriver(options);
 
         DevToolsParser devToolsParser = new DevToolsParser(driver);
-        devToolsParser.parseDevToolsPort(devToolsParser.getDevToolLogEntry());
-        String devToolsUri = devToolsParser.getUrl();
+        String devToolsUri = devToolsParser.getDevToolsUri();
 
         WebSocketExecutor webSocketExecutor = new WebSocketExecutor();
-        String stringToExecute = QueryProvider.getClickWithJQuerySelector(DIV_ID_LOGIN_BUTTON);
+       /* String stringToExecute = QueryProvider.getClickWithJQuerySelector(DIV_ID_LOGIN_BUTTON);
         webSocketExecutor.executeString(devToolsUri, EXTENSION_ID, stringToExecute);
-        System.out.println();
+        System.out.println();*/
+       //TODO add handler if element not found?
         webSocketExecutor = new WebSocketExecutor();
         Object resultT = webSocketExecutor.executeString(devToolsUri, EXTENSION_ID, QueryProvider.getTextWithJQuerySelector(DIV_ID_LOGIN_BUTTON));
         String value = ResultParser.getText((JSONObject) resultT);
@@ -46,6 +43,13 @@ public class AppTest {
         resultT = webSocketExecutor.executeString(devToolsUri, EXTENSION_ID, QueryProvider.getTextWithJQuerySelector(LOGIN_TEXT_BUTTON));
         value = ResultParser.getText((JSONObject) resultT);
         System.out.println(value);
+        webSocketExecutor = new WebSocketExecutor();
+        resultT = webSocketExecutor.executeString(devToolsUri, EXTENSION_ID, QueryProvider.getAttributeWithJQuerySelector(DIV_ID_LOGIN_BUTTON, "class"));
+        value = ResultParser.getText((JSONObject)resultT);
+        System.out.println(value);
+        System.out.println();
+        driver.findElement(By.id("id")).isDisplayed();
+
     }
 
     @AfterTest
@@ -55,9 +59,6 @@ public class AppTest {
 
     private ChromeOptions getChromeOptions() {
         ChromeOptions options = new ChromeOptions();
-        LoggingPreferences logPrefs = new LoggingPreferences();
-        logPrefs.enable(LogType.DRIVER, Level.ALL);
-        options.setCapability(CapabilityType.LOGGING_PREFS, logPrefs);
         options.addExtensions(new File("driver/swa.crx"));
         return options;
     }
